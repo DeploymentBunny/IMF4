@@ -459,7 +459,8 @@ function Button1Tab1Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Update and distribute the bootimage")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-UpdateBootImage.ps1")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-UpdateBootImage.ps1")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -467,7 +468,8 @@ function Button2Tab1Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Remove Reference/Validation VMs")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-VerifyCleanupVMs.ps1")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-VerifyCleanupVMs.ps1")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -475,7 +477,8 @@ function Button3Tab1Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Create reference image(s) with patches")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-Build.ps1 -EnableWSUS True")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-Build.ps1 -EnableWSUS True")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -483,7 +486,8 @@ function Button4Tab1Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Create reference image(s) without patches")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-Build.ps1 -EnableWSUS False")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-Build.ps1 -EnableWSUS False")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -491,7 +495,8 @@ function Button5Tab1Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("building validation VM(s)")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-VerifyBuild.ps1 -KeepVMs False")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-VerifyBuild.ps1 -KeepVMs False")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -499,7 +504,8 @@ function Button6Tab1Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Generate OS reports")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-GenerateReport.ps1")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-GenerateReport.ps1")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -507,7 +513,8 @@ function Button7Tab1Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Archive WIM files")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-Archive.ps1")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-Archive.ps1")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -522,7 +529,8 @@ function Button2Tab2Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Import")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-ImportISO.ps1 -ISOImage $($TextBox1Tab2.Text) -OSFolder $($TextBox2Tab2.Text) -OrgName $($Settings.Settings.CustomerName)")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-ImportISO.ps1 -ISOImage $($TextBox1Tab2.Text) -OSFolder $($TextBox2Tab2.Text) -OrgName $($Settings.Settings.CustomerName)")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -530,7 +538,8 @@ function Button1Tab3Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Saving configuration")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-Configure.ps1 -DeploymentShare $($TextBox1Tab3.Text) -StartUpRAM 3 -VLANID $($TextBox4Tab3.Text) -Computername $($TextBox2Tab3.Text) -SwitchName $($TextBox3Tab3.Text) -VMLocation $($TextBox5Tab3.Text) -ISOLocation $($TextBox6Tab3.Text) -BuildaccountName $($TextBox7Tab3.Text) -BuildaccountPassword $($TextBox8Tab3.Text) -CustomerName $($TextBox9Tab3.Text)")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-Configure.ps1 -DeploymentShare $($TextBox1Tab3.Text) -StartUpRAM 3 -VLANID $($TextBox4Tab3.Text) -Computername $($TextBox2Tab3.Text) -SwitchName $($TextBox3Tab3.Text) -VMLocation $($TextBox5Tab3.Text) -ISOLocation $($TextBox6Tab3.Text) -BuildaccountName $($TextBox7Tab3.Text) -BuildaccountPassword $($TextBox8Tab3.Text) -CustomerName $($TextBox9Tab3.Text)")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -538,7 +547,8 @@ function Button2Tab3Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Installing")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-Install.ps1")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-Install.ps1")
     Invoke-Command -ScriptBlock $ScriptBlock
 }
 
@@ -546,9 +556,9 @@ function Button3Tab3Click( $object ){
     $result1.Items.Clear()
     $result1.Items.Add("Uninstalling")
     Start-Sleep -Seconds 1
-    $ScriptBlock = [ScriptBlock]::Create("$CurrentPath\Scripts\IMF-UnInstall.ps1")
+    Set-Location $CurrentPath
+    $ScriptBlock = [ScriptBlock]::Create(".\Scripts\IMF-UnInstall.ps1")
     Invoke-Command -ScriptBlock $ScriptBlock
-
 }
 
 Main # This call must remain below all other event functions

@@ -1,0 +1,33 @@
+<Settings>
+  <ConcurrentRunningVMs>2</ConcurrentRunningVMs>
+  <CustomerName>ViaMonstra</CustomerName>
+  <MDT>
+    <DeploymentShare>C:\MDTBuildLab</DeploymentShare>
+    <RefTaskSequenceFolderName>Reference</RefTaskSequenceFolderName>
+    <MSFTOSImageFolderName>Validate</MSFTOSImageFolderName>
+    <ValidateTaskSequenceFolderName>Validate</ValidateTaskSequenceFolderName>
+    <ValidateOSImageFolderName>Validate</ValidateOSImageFolderName>
+    <ReportApplicationName>Action - Generate OSReport</ReportApplicationName>
+  </MDT>
+  <HyperV>
+    <StartUpRAM>3</StartUpRAM>
+    <VLANID>0</VLANID>
+    <Computername>HOST01</Computername>
+    <SwitchName>UplinkSwitch</SwitchName>
+    <VMLocation>C:\VMs</VMLocation>
+    <ISOLocation>C:\ISO</ISOLocation>
+    <VHDSize>80</VHDSize>
+    <NoCPU>2</NoCPU>
+  </HyperV>
+  <Security>
+    <BuildAccount>
+      <Name>MDT_BA</Name>
+      <Password>Passw0rd</Password>
+      <LocalorDomain>LOCAL</LocalorDomain>
+    </BuildAccount>
+  </Security>
+  <SCVMM>
+    <InUse>False</InUse>
+    <SCVMMServerName>SFASCVM01</SCVMMServerName>
+  </SCVMM>
+</Settings>

@@ -1,0 +1,474 @@
+<job id="ZTIBACKUP">
+   <script language="VBScript" src="ZTIUtility.vbs"/>
+   <script language="VBscript" src="ZTIDiskUtility.vbs"/>
+   <script language="VBscript" src="ZTIBCDUtility.vbs"/>
+   <script language="VBScript">
+
+' // ***************************************************************************
+' // 
+' // Copyright (c) Microsoft Corporation.  All rights reserved.
+' // 
+' // Microsoft Deployment Toolkit Solution Accelerator
+' //
+' // File:      ZTIBackup.wsf
+' // 
+' // Version:   6.3.8443.1000
+' // 
+' // Purpose:   Backup a computer using DISM
+' // 
+' // Usage:     cscript ZTIBackup.wsf [/debug:true]
+' // 
+' // ***************************************************************************
+
+Option Explicit
+RunNewInstance
+
+'//----------------------------------------------------------------------------
+'//
+'//  Global constants
+'//
+'//----------------------------------------------------------------------------
+
+'//----------------------------------------------------------------------------
+'//  Main Class
+'//----------------------------------------------------------------------------
+
+Class ZTIBackup
+
+	'//----------------------------------------------------------------------------
+	'//  Class instance variable declarations
+	'//----------------------------------------------------------------------------
+	Dim sDestinationLogicalDrive
+
+	'//----------------------------------------------------------------------------
+	'//  Constructor to initialize needed global objects
+	'//----------------------------------------------------------------------------
+
+	Private Sub Class_Initialize
+
+		If oEnvironment.Item("DeploymentType") = "NEWCOMPUTER" and oEnvironment.Item("Phase") <> "STATERESTORE" Then
+			oLogging.CreateEntry "Cannot determine Destination Logical Drive, assuming disks are configured correctly", LogTypeInfo
+		Else
+			sDestinationLogicalDrive = oUtility.GetOSTargetDriveLetter
+		End If
+
+	End Sub
+
+
+	'//----------------------------------------------------------------------------
+	'//  Main routine
+	'//----------------------------------------------------------------------------
+
+	Function Main
+	
+		Dim iRetVal
+		Dim bUseLocal
+		Dim sNetworkStorePath
+		Dim sLocalStorePath
+		Dim oDrive
+		Dim iTotal
+		Dim iAvailable
+		Dim sBackupFile
+		Dim sBackupPath
+		Dim sBackupDrive
+		Dim bSkipPE
+		Dim bZtiBareMetal
+		Dim sCmd
+		Dim iRC
+		Dim iLastPos
+		Dim Drive, Partition
+		Dim sPrefix
+		Dim oExec
+		Dim sWimScriptPath
+
+
+		iRetVal = Success
+
+
+		'//----------------------------------------------------------------------------
+		'//  See what we need to do
+		'//----------------------------------------------------------------------------
+
+		' Exit if ComputerBackupLocation is NONE
+
+		If UCase(oEnvironment.Item("ComputerBackupLocation")) = "NONE" or UCase(oEnvironment.Item("ComputerBackupLocation")) = "" then
+		
+			oLogging.CreateEntry "Computer backup bypassed (ComputerBackupLocation=""" & oEnvironment.Item("ComputerBackupLocation") & """", LogTypeInfo
+			
+			Main = Success
+			Exit Function
+			
+		End if
+
+
+		'//----------------------------------------------------------------------------
+		'//  Figure out what drives to back up
+		'//----------------------------------------------------------------------------
+
+		sBackupDrive = Ucase(oEnvironment.Item("BackupDrive"))
+		bSkipPE = false
+		If sBackupDrive = "" then
+		
+			oLogging.CreateEntry "BackupDrive not specified searching for backup drive", LogTypeInfo
+
+			' If the the exact Disk and Partition are specified, then default to that partition
+
+			If oEnvironment.Item("BackupDisk") <> "" and oEnvironment.Item("BackupPartition") <> "" then
+			
+				' Return an array of Drives on fixed disks.
+				For each Partition in objWMI.ExecQuery("SELECT * from Win32_DiskPartition WHERE DiskIndex = " & _
+					oEnvironment.Item("BackupDisk") & " and Index = " & cstr( oEnvironment.Item("BackupPartition") - 1 ))
+
+					For each Drive in objWMI.ExecQuery("ASSOCIATORS OF {" & Partition.Path_ & "} WHERE AssocClass = Win32_LogicalDiskToPartition")
+					
+						sBackupDrive = Drive.DeviceID
+						oLogging.CreateEntry "BackupDrive set to: " & sBackupDrive, LogTypeInfo
+						Exit for ' Ignore any other drives
+						
+					Next
+					
+					Exit for ' Ignore any other drives
+					
+				Next
+
+				'If sbBackupDrive is still blank then check again using another method
+				If sBackupDrive = "" then
+				
+					For each Partition in objWMI.ExecQuery("Select * from Win32_LogicalDisktoPartition")
+					
+						If Instr(Partition.Antecedent,"Disk #" & oEnvironment.Item("BackupDisk") & ", Partition #" & oEnvironment.Item("BackupPartition")) Then
+						
+							sBackupDrive = Mid(Right(Partition.Dependent,4),2,2)
+							oLogging.CreateEntry "BackupDrive set to: " & sBackupDrive, LogTypeInfo
+
+							Exit For
+							
+						End if
+						
+					Next
+					
+				End if
+				
+			End if
+
+			' Otherwise, default to the Destination Logical Drive
+			If sBackupDrive = "" then
+			
+				If sDestinationLogicalDrive <> "" and (oFSO.FolderExists(sDestinationLogicalDrive & "\Windows") or oFSO.FolderExists(sDestinationLogicalDrive & "\winnt")) Then
+					
+					sBackupDrive = sDestinationLogicalDrive
+					oLogging.CreateEntry "BackupDrive defaulting to Destination Logical Drive: " & sBackupDrive, LogTypeInfo
+
+				Else
+					'Verify that the Partition actually contains the Windows Directory
+					'This may not be the case for CaptureOnly task Sequence
+					For each oDrive in oFSO.Drives
+						If oDrive.DriveType = 2 then
+							If oDrive.IsReady Then
+								If (oFSO.FolderExists(oDrive.DriveLetter & ":\Windows") or oFSO.FolderExists(oDrive.DriveLetter & ":\Winnt")) and oDrive.DriveLetter <> "X" then
+
+									sBackupDrive = oDrive.DriveLetter & ":"
+									oLogging.CreateEntry sBackupDrive & " contains a Windows folder, setting as backup drive", LogTypeInfo
+									
+									Exit For
+
+								End if
+							End If
+						End if
+					Next
+					
+				End If									
+				 
+
+			End If							
+			
+		End If
+
+		
+
+		'//----------------------------------------------------------------------------
+		'//  Check to see if we can store the backup locally.
+		'//----------------------------------------------------------------------------
+
+		oLogging.CreateEntry "Checking to see if we can store the backup locally", LogTypeInfo
+		bUseLocal = False
+		iTotal = 0
+		For each oDrive in oFSO.Drives
+
+			If oDrive.DriveType = 2 then
+
+				If bSkipPE then
+					' Skip Windows PE RAMdisk
+				ElseIf sBackupDrive <> "ALL" and sBackupDrive <> oDrive.Path then
+					' Skip drives that aren't requested
+				ElseIf not oDrive.IsReady then
+					' Skip drives that aren't ready
+				ElseIf oFSO.FolderExists(oDrive.Path) then   ' Skip unformatted disks
+
+					iTotal = iTotal + (oDrive.TotalSize - oDrive.AvailableSpace) / 1024
+					oLogging.CreateEntry "Drive " & oDrive.DriveLetter & ": " & (oDrive.TotalSize - oDrive.AvailableSpace) / 1024, LogTypeInfo
+
+				End if
+
+			End if
+
+		Next
+
+		If iTotal = 0 then
+			
+			oLogging.CreateEntry "Nothing to back up, exiting", LogTypeInfo
+			Main = Success
+			Exit Function
+			
+		End if
+
+		sLocalStorePath = oUtility.StatePath
+		oLogging.CreateEntry "Local store path = " & sLocalStorePath, LogTypeInfo
+
+		oLogging.CreateEntry "Total used space: " & iTotal, LogTypeInfo
+		iAvailable = oFSO.GetDrive(oFSO.GetFolder(Left(sLocalStorePath,3)).Drive).AvailableSpace / 1024
+		oLogging.CreateEntry "Available space at " & sLocalStorePath & ": " & iAvailable, LogTypeInfo
+		
+		If iAvailable > iTotal then
+			
+			oLogging.CreateEntry "Backup can use local path", LogTypeInfo
+			oEnvironment.Item("USMTLocal") = "True"
+			bUseLocal = True
+				
+		End if
+
+
+		'//----------------------------------------------------------------------------
+		'//  Figure out the paths
+		'//----------------------------------------------------------------------------
+
+		' Add logic to force non-local backup for ZTI BareMetal
+
+		If oEnvironment.Item("DeploymentType") = "NEWCOMPUTER" or oEnvironment.Item("DeploymentType") = "REPLACE" or oEnvironment.Item("DeploymentType") = "CUSTOM" then
+			
+			oLogging.CreateEntry "Local store not permitted", LogTypeInfo
+			bUseLocal = False
+				
+		End If
+
+		If (oEnvironment.Item("BackupShare") <> "" and oEnvironment.Item("BackupDir") <> "") Or oEnvironment.Item("DeploymentMethod") = "SCCM" then
+			
+			sNetworkStorePath = oEnvironment.Item("BackupShare") & "\" & oEnvironment.Item("BackupDir")
+			oLogging.CreateEntry "Network store path set to: " & sNetworkStorePath, LogTypeInfo
+				
+		Else
+			
+			sNetworkStorePath = ""
+			oLogging.CreateEntry "Network store path set to blank", LogTypeInfo
+
+		End if
+
+		If oEnvironment.Item("DeploymentMethod") = "SCCM" Then
+			If oEnvironment.Item("OSDStateStorePath") = "" Then
+				oEnvironment.Item("OSDStateStorePath") = oUtility.StatePath
+			End If
+			
+			sNetworkStorePath = oEnvironment.Item("OSDStateStorePath")
+			
+			If oEnvironment.Item("DeploymentType") = "REPLACE" then
+				bUseLocal = False
+			ElseIf UCase(oEnvironment.Item("USMTLOCAL")) = "TRUE" Then
+				bUseLocal = True
+			Else
+				bUseLocal = FALSE
+			End If
+			
+		End If
+
+
+		' Check specified user data location
+
+		Select Case UCase(oEnvironment.Item("ComputerBackupLocation"))
+		Case "AUTO"
+			If bUseLocal then
+			
+				oLogging.CreateEntry "Computer backup will use local path (ComputerBackupLocation=AUTO)", LogTypeInfo
+				
+			Else
+				
+				oLogging.CreateEntry "Computer backup will use network path (ComputerBackupLocation=AUTO)", LogTypeInfo
+				
+			End if
+				
+		Case "NETWORK"
+			If sNetworkStorePath = "" then
+				
+				oLogging.ReportFailure "Computer backup not possible, no network path (BackupShare, BackupDir) specified.", 6501
+					
+			End if
+
+		Case Else  ' Explicit path specified
+
+			sNetworkStorePath = oEnvironment.Item("ComputerBackupLocation")
+			oLogging.CreateEntry "Network store path set to: " & sNetworkStorePath, LogTypeInfo
+
+			' If the path contains a file name, separate the two
+
+			If Instr(1, sNetworkStorePath, ".wim", 1) > 0 then
+
+				iLastPos = 1
+				While Instr(iLastPos, sNetworkStorePath, "\") > 0
+					iLastPos = Instr(iLastPos, sNetworkStorePath, "\") + 1
+				WEnd
+
+				sBackupFile = Mid(sNetworkStorePath, iLastPos)
+				sNetworkStorePath = Left(sNetworkStorePath, iLastPos - 2)
+
+				oLogging.CreateEntry "Backup file set to: " & sBackupFile, LogTypeInfo
+				oLogging.CreateEntry "Network store path set to: " & sNetworkStorePath, LogTypeInfo
+				
+			End if
+
+		End Select
+
+
+		' Figure out the name of the file
+
+		If sBackupFile <> "" then
+			' Already set, leave it alone
+		ElseIf oEnvironment.Item("BackupFile") = "" then
+			
+			sBackupFile = oUtility.ComputerName & ".wim"
+			oLogging.CreateEntry "Backup file name set to: " & sBackupFile, LogTypeInfo
+				
+		Else
+		
+			sBackupFile = oEnvironment.Item("BackupFile")
+			oLogging.CreateEntry "Backup file name already set to: " & sBackupFile, LogTypeInfo
+			
+		End if
+
+
+		' Figure out the image name prefix
+
+		If UCase(oEnvironment.Item("DoCapture")) = "YES" then
+			
+			sPrefix = oEnvironment.Item("TaskSequenceID")
+				
+		Else
+			
+			sPrefix = Year(Now) & Right("0"& Month(Now), 2) & Right("0" & Day(Now), 2) & Right("0" & Hour(Now), 2) & Right("0" & Minute(Now), 2)
+				
+		End if
+
+
+		' Set the backup path
+
+		If bUseLocal and (UCase(oEnvironment.Item("ComputerBackupLocation")) = "AUTO" or oEnvironment.Item("ComputerBackupLocation") = "") then
+			
+			sBackupPath = sLocalStorePath & "\" & sBackupFile
+			
+		Else
+			
+			sBackupPath = sNetworkStorePath  & "\" & sBackupFile
+				
+		End if
+
+
+		' Make sure we have a connection and that the path specified exists
+		
+		oLogging.CreateEntry "Using the backup path: " & sBackupPath, LogTypeInfo
+		oUtility.ValidateConnection oFSO.GetParentFolderName(sBackupPath)
+		oUtility.VerifyPathExists oFSO.GetParentFolderName(sBackupPath)
+
+
+		' If capturing an XP or Server 2003 image, delete the boot folder and bootmgr file (they cause issues if the image is later used with ConfigMgr)
+
+		If Left(oEnvironment.Item("ImageBuild"), 1) = "5" then
+
+			If oFSO.FolderExists("c:\Boot") then
+				On Error Resume Next
+				oFSO.DeleteFolder "c:\Boot", true
+				TestAndLog SUCCESS, "Deleted Folder c:\boot"
+					
+			End if
+				
+			If oFSO.FileExists("c:\Bootmgr") then
+				
+				On Error Resume Next
+				oFSO.DeleteFile "c:\Bootmgr", true
+				TestAndLog SUCCESS, "Deleted Bootmgr"
+					
+			End if
+
+		End if
+
+
+		'//----------------------------------------------------------------------------
+		'//  Now perform the backup
+		'//----------------------------------------------------------------------------
+
+		For each oDrive in oFSO.Drives
+			If oDrive.DriveType = 2 then
+
+				If bSkipPE then
+					
+					oLogging.CreateEntry "Skipping Windows PE RAMdisk", LogTypeInfo
+						
+				ElseIf sBackupDrive = "ALL" and ucase(oDrive.Path) = "X:" and oEnv("SystemDrive") = "X:" then
+					
+					oLogging.CreateEntry "Skipping RamDisk drive " & oDrive.Path & " because it X: " , LogTypeInfo
+						
+				ElseIf sBackupDrive <> "ALL" and sBackupDrive <> oDrive.Path then
+					
+					oLogging.CreateEntry "Skipping drive " & oDrive.Path & " because it's not " & sBackupDrive, LogTypeInfo
+						
+				ElseIf not oDrive.IsReady then
+					
+					oLogging.CreateEntry "Skipping drive drive because it is not ready (probably not formatted).", LogTypeInfo
+						
+				ElseIf oFSO.FolderExists(oDrive.Path) then   ' Skip unformatted disks
+
+					sWimScriptPath = oEnvironment.Item("DeployRoot") & "\Tools\" & oEnvironment.Item("Architecture") & "\wimscript.ini"
+
+
+					' Build the command
+
+					oUtility.VerifyPathExists oUtility.LocalRootPath & "\Scratch"
+					If oFSO.FileExists(sBackupPath) then
+						sCmd = " /Append-Image /CaptureDir:" & oDrive.Path & " /ImageFile:""" & sBackupPath & """ /Name:""" & sPrefix & Left(oDrive.Path, 1) & "Drive"" /ConfigFile:""" & sWimScriptPath & """ /ScratchDir:""" & oUtility.LocalRootPath & "\Scratch"""
+					Else
+						sCmd = " /Capture-Image /Description:""" & oEnvironment.Item("TaskSequenceName") & """ /CaptureDir:" & oDrive.Path & "  /ImageFile:""" & sBackupPath & """  /Name:""" & sPrefix & Left(oDrive.Path, 1) & "Drive"" /Compress:MAX /ConfigFile:""" & sWimScriptPath & """ /ScratchDir:""" & oUtility.LocalRootPath & "\Scratch"""
+					End if
+
+
+					' Execute it
+
+					oLogging.CreateEvent 41035, LogTypeInfo, "Beginning backup of drive " & oDrive.Path, Array(oDrive.Path)
+			
+					iRc = oUtility.FindExeAndRunWithLogging( "dism.exe", sCmd )			
+					If iRc <> 0 then
+						
+						oLogging.CreateEvent 41036, LogTypeError, "Error creating an image of drive " & oDrive.Path & ", rc = " & iRc, Array(oDrive.Path, iRc)
+						iRetVal = iRc
+						Exit For
+							
+					Else
+						
+						oLogging.CreateEvent 41037, LogTypeInfo, "Successfully created image of drive " & oDrive.Path, Array(oDrive.Path, iRc)
+							
+					End if
+
+				End if
+
+			End if
+				
+		Next
+
+		oLogging.CreateEntry oUtility.ScriptName & " COMPLETED.  Return Value = " & iRetVal, LogTypeInfo
+
+		Main = iRetval
+
+		' All done
+			
+
+	End Function
+
+End Class
+   </script>
+</job>

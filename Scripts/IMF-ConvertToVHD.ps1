@@ -1,10 +1,10 @@
 ﻿<#
 .Synopsis
-    ImageFactory 3.3
+    ImageFactory 4.0
 .DESCRIPTION
-    ImageFactory 3.3
+    ImageFactory 4.0
 .EXAMPLE
-    ImageFactoryV3-ConvertToVHD.ps1
+    IMF-ConvertToVHD.ps1
 .NOTES
     Created:	 2016-11-24
     Version:	 3.1
@@ -14,6 +14,9 @@
 
     Updated:	 2017-09-27
     Version:	 3.3
+
+    Updated:	 20018-12-18
+    Version:	 4.0
 
 
     Author - Mikael Nystrom
@@ -40,18 +43,6 @@ Param(
 )
 
 New-Item -Path $VHDxFolder -ItemType Directory -Force
-
-$wims = Get-ChildItem -Path $CaptureFolder -Filter *.wim
-foreach($wim in $wims){
-    $WindowsImage = Get-WindowsImage -ImagePath $wim.FullName -Index 1 -Verbose
-    if ($WindowsImage.ImageDescription -ne ""){
-        $ImageName = $WindowsImage.ImageDescription
-    }else{
-        $ImageName = $wim.BaseName
-    }
-    Write-Host "$($wim.FullName) is $ImageName"
-}
-
 
 $wims = Get-ChildItem -Path $CaptureFolder -Filter *.wim
 foreach($wim in $wims){

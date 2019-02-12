@@ -54,7 +54,7 @@ $XMLFile = "$RootPath\IMF.xml"
 $Global:writetoscreen = $true
 
 #Importing modules
-Import-Module PSINI -ErrorAction Stop -WarningAction Stop -Force
+Import-Module PSINI -ErrorAction Stop -WarningAction Stop -Force -MinimumVersion 2.0.5
 Write-Log -Message "Module PSINI imported"
 Import-Module IMFFunctions -ErrorAction Stop -WarningAction Stop -Force
 Write-Log -Message "Module IMFFunctions imported"
@@ -314,11 +314,11 @@ do
     foreach($property in ($Data.content.properties) ){
         $Hash =  [ordered]@{ 
             Name = $($property.Name); 
-            PercentComplete = $($property.PercentComplete.’#text’); 
-            Warnings = $($property.Warnings.’#text’); 
-            Errors = $($property.Errors.’#text’); 
+            PercentComplete = $($property.PercentComplete.'#text'); 
+            Warnings = $($property.Warnings.'#text'); 
+            Errors = $($property.Errors.'#text'); 
             DeploymentStatus = $( 
-            Switch($property.DeploymentStatus.’#text’){ 
+            Switch($property.DeploymentStatus.'#text'){ 
                 1 { "Active/Running"} 
                 2 { "Failed"} 
                 3 { "Successfully completed"} 
@@ -334,8 +334,8 @@ do
             VMHost = $($property.VMHost.'#text');
             VMName = $($property.VMName.'#text');
             LastTime = $($property.LastTime.'#text') -replace "T"," ";
-            StartTime = $($property.StartTime.’#text’) -replace "T"," "; 
-            EndTime = $($property.EndTime.’#text’) -replace "T"," "; 
+            StartTime = $($property.StartTime.'#text') -replace "T"," "; 
+            EndTime = $($property.EndTime.'#text') -replace "T"," "; 
             }
         New-Object PSObject -Property $Hash
         }
@@ -360,7 +360,7 @@ do
                     Write-Host "Currently running VM's : $($RunningVMs.Name) at $(Get-Date)"
                 }
                 else{
-                    Get-MDTOData -MDTMonitorServer $MDTServer | Where-Object -Property Name -EQ -Value $RunningVM.Name | Select-Object Name,PercentComplete,Warnings,Errors,DeploymentStatus,StartTime,Lasttime | FT
+                    Get-MDTOData -MDTMonitorServer $MDTServer | Where-Object -Property Name -EQ -Value $RunningVM.Name | Select-Object Name,PercentComplete,Warnings,Errors,DeploymentStatus,StartTime,Lasttime | Format-Table
                 }
             }
             Start-Sleep -Seconds "30"
@@ -409,11 +409,11 @@ $return = Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername)
     foreach($property in ($Data.content.properties) ){
         $Hash =  [ordered]@{ 
             Name = $($property.Name); 
-            PercentComplete = $($property.PercentComplete.’#text’); 
-            Warnings = $($property.Warnings.’#text’); 
-            Errors = $($property.Errors.’#text’); 
+            PercentComplete = $($property.PercentComplete.'#text'); 
+            Warnings = $($property.Warnings.'#text'); 
+            Errors = $($property.Errors.'#text'); 
             DeploymentStatus = $( 
-            Switch($property.DeploymentStatus.’#text’){ 
+            Switch($property.DeploymentStatus.'#text'){ 
                 1 { "Active/Running"} 
                 2 { "Failed"} 
                 3 { "Successfully completed"} 
@@ -429,8 +429,8 @@ $return = Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername)
             VMHost = $($property.VMHost.'#text');
             VMName = $($property.VMName.'#text');
             LastTime = $($property.LastTime.'#text') -replace "T"," ";
-            StartTime = $($property.StartTime.’#text’) -replace "T"," "; 
-            EndTime = $($property.EndTime.’#text’) -replace "T"," "; 
+            StartTime = $($property.StartTime.'#text') -replace "T"," "; 
+            EndTime = $($property.EndTime.'#text') -replace "T"," "; 
             }
         New-Object PSObject -Property $Hash
         }
@@ -442,7 +442,7 @@ $return = Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername)
                     Write-Output "Currently running VM's : $($RunningVMs.Name) at $(Get-Date)"
                 }
                 else{
-                    Get-MDTOData -MDTMonitorServer $MDTServer | Where-Object -Property Name -EQ -Value $RunningVM.Name | Select-Object Name,PercentComplete,Warnings,Errors,DeploymentStatus,StartTime,Lasttime | FT
+                    Get-MDTOData -MDTMonitorServer $MDTServer | Where-Object -Property Name -EQ -Value $RunningVM.Name | Select-Object Name,PercentComplete,Warnings,Errors,DeploymentStatus,StartTime,Lasttime | Format-Table
                 }
             }
             Start-Sleep -Seconds "30"

@@ -1,7 +1,7 @@
 Param(
     [Parameter(mandatory=$True,HelpMessage="Name and path of Sourcefile.")]
     [ValidateNotNullOrEmpty()]
-    [ValidateScript({Test-Path $_ -PathType ‘Leaf’})] 
+    [ValidateScript({Test-Path $_ -PathType 'Leaf'})] 
     [string] 
     $Sourcefile,
 
@@ -159,7 +159,7 @@ Switch ($Disklayout){
         Write-Verbose "OSBoot Driveletter is now = $VHDVolumeBoot"
 
         #Apply Image
-        sleep 5
+        Start-Sleep 5
         $Exe = $DISMExe
         $Args = " /apply-Image /ImageFile:""$SourceFile"" /index:$Index /ApplyDir:$VHDVolume\"
         Invoke-Exe -Executable $Exe -Arguments $Args -SuccessfulReturnCode 0 -Verbose
@@ -173,7 +173,7 @@ Switch ($Disklayout){
         Write-Verbose "Disknumber is now $VHDDiskNumber"
 
         # Format VHDx
-        Initialize-Disk -Number $VHDDiskNumber –PartitionStyle GPT
+        Initialize-Disk -Number $VHDDiskNumber -PartitionStyle GPT
         $VHDDrive1 = New-Partition -DiskNumber $VHDDiskNumber -GptType '{ebd0a0a2-b9e5-4433-87c0-68b6b72699c7}' -Size 499MB 
         $VHDDrive1 | Format-Volume -FileSystem FAT32 -NewFileSystemLabel System -Confirm:$false -Verbose
         $VHDDrive2 = New-Partition -DiskNumber $VHDDiskNumber -GptType '{e3c9e316-0b5c-4db8-817d-f92df00215ae}' -Size 128MB
@@ -189,7 +189,7 @@ Switch ($Disklayout){
         Write-Verbose "OSBoot Driveletter is now = $VHDVolumeBoot"
 
         #Apply Image
-        sleep 5
+        Start-Sleep 5
         $Exe = $DISMExe
         $Args = " /apply-Image /ImageFile:""$SourceFile"" /index:$Index /ApplyDir:$VHDVolume\"
         Invoke-Exe -Executable $Exe -Arguments $Args -SuccessfulReturnCode 0 -Verbose
@@ -218,7 +218,7 @@ Switch ($Disklayout){
         Write-Verbose "OSDrive Driveletter is now = $VHDVolume"
 
         #Apply Image
-        sleep 5
+        Start-Sleep 5
         $Exe = $DISMExe
         $Args = " /apply-Image /ImageFile:""$SourceFile"" /index:$Index /ApplyDir:$VHDVolume\"
         Invoke-Exe -Executable $Exe -Arguments $Args -SuccessfulReturnCode 0 -Verbose    }
@@ -367,7 +367,7 @@ If ($PathtoPackagesFolder -like '')
             $Packges = Get-Childitem -Path $PathtoPackagesFolder -Filter *.cab
                 foreach ($Packge in $Packges)
                 {
-                    Add-WindowsPackage –Path $VHDVolume –PackagePath $Packge.Fullname
+                    Add-WindowsPackage -Path $VHDVolume -PackagePath $Packge.Fullname
 
                 }
 

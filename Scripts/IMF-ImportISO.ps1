@@ -118,7 +118,7 @@ foreach($item in $Result){
         $Template = "Client.xml"
     }
         
-    $item | select *
+    $item | Select-Object *
     $Name = "Ref $($item.ImageName) for $($OSFolder)"
     $ID = "$OSFolder-$($item.ImageIndex)"
     $OperatingSystemPath = "MDT:\Operating Systems\Msft\$($item.name)"

@@ -96,7 +96,7 @@ Write-Log -Message "Module IMFFunctions imported"
 if((Get-Module PSINI).name -ne "PSINI"){
     Install-Module PSINI -Force -SkipPublisherCheck -ErrorAction Stop
 }else{Update-Module PSINI -Force}
-Import-Module PsIni -ErrorAction Stop -WarningAction Stop -RequiredVersion 2.0.5
+Import-Module PsIni -ErrorAction Stop -WarningAction Stop -MinimumVersion 2.0.5
 Write-Log -Message "Module PsIni imported"
 
 #Importing ModuleMicrosoftDeploymentToolkit

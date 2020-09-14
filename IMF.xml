@@ -1,6 +1,8 @@
 <Settings>
   <ConcurrentRunningVMs>2</ConcurrentRunningVMs>
   <CustomerName>ViaMonstra</CustomerName>
+  <PublishingJsonFolder>E:\Images</PublishingJsonFolder>
+  <PublishingFolder>E:\Images</PublishingFolder>
   <MDT>
     <DeploymentShare>C:\MDTBuildLab</DeploymentShare>
     <RefTaskSequenceFolderName>Reference</RefTaskSequenceFolderName>

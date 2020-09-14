@@ -1,5 +1,5 @@
 ﻿#Configure Imagefactory
-.\Scripts\IMF-Configure.ps1 -DeploymentShare E:\MDTBuildLab -StartUpRAM 4 -VLANID 0 -Computername $env:COMPUTERNAME -SwitchName "InternalNAT" -VMLocation E:\VMs -ISOLocation E:\ISO -ConcurrentRunningVMs 2 -BuildaccountName MDT_BA -BuildaccountPassword Passw0rd!#
+.\Scripts\IMF-Configure.ps1 -DeploymentShare E:\MDTBuildLab -StartUpRAM 4 -VLANID 0 -Computername HYPERVHOST01 -SwitchName "SwitchName" -VMLocation E:\VMs -ISOLocation E:\ISO -ConcurrentRunningVMs 2 -BuildaccountName MDT_BA -BuildaccountPassword Passw0rd!#
 
 #Install Imagefactory
 .\Scripts\IMF-Install.ps1

@@ -10,7 +10,7 @@
 .\Scripts\IMF-Build.ps1 -EnableWSUS True
 
 # Publish
-.\Scripts\IMF-Publish.ps1 -VHDUEFI -VHDBIOS
+# .\Scripts\IMF-Publish.ps1 -VHDUEFI -VHDBIOS
 
 #Move to Archive
 .\Scripts\IMF-Archive.ps1

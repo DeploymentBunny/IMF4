@@ -100,7 +100,7 @@ Write-Log -Message "Succesfully mounted $($DiskImage.imagepath)"
 $Result = Import-MDTOperatingSystem -Path "MDT:\Operating Systems\Msft" -SourcePath "$(($DiskImage | Get-Volume).DriveLetter):\" -DestinationFolder $OSFolder
 Write-Log -Message "Succesfully imported $($item.name) in $($item.source)"
     
-$Return = Dismount-DiskImage -ImagePath $DiskImage.ImagePath -PassThru
+$Return = Dismount-DiskImage -ImagePath $DiskImage.ImagePath
 Write-Log -Message "Succesfully dismounted $($Return.Imagepath)"
 
 $Return = New-Item -Path "MDT:\Packages" -enable "True" -Name $OSFolder -Comments "" -ItemType "folder"

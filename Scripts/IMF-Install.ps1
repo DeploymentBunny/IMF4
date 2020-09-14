@@ -49,7 +49,7 @@ Import-Module IMFFunctions -ErrorAction Stop -WarningAction Stop -Force
 Write-Log -Message "Module IMFFunctions imported"
 
 #Install PSINI
-Import-Module PsIni -ErrorAction Stop -WarningAction Stop -RequiredVersion 2.0.5
+Import-Module PsIni -ErrorAction Stop -WarningAction Stop -MinimumVersion 2.0.5
 Write-Log -Message "Module PsIni imported"
 
 #Importing ModuleMicrosoftDeploymentToolkit

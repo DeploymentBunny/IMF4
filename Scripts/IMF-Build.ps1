@@ -276,7 +276,7 @@ Foreach($Ref in $RefTaskSequenceIDs){
     $CSIniUpdate = Set-IniContent -FilePath $IniFile -Sections "$BIOSSerialNumber" -NameValuePairs @{"BackupShare"="$($MDTSettings.UNCPath)"};Out-IniFile -FilePath $IniFile -Force -Encoding ASCII -InputObject $CSIniUpdate
     $CSIniUpdate = Set-IniContent -FilePath $IniFile -Sections "$BIOSSerialNumber" -NameValuePairs @{"BackupDir"="Captures"};Out-IniFile -FilePath $IniFile -Force -Encoding ASCII -InputObject $CSIniUpdate
     $CSIniUpdate = Set-IniContent -FilePath $IniFile -Sections "$BIOSSerialNumber" -NameValuePairs @{"Applications001"="$AppGuid"};Out-IniFile -FilePath $IniFile -Force -Encoding ASCII -InputObject $CSIniUpdate
-    $CSIniUpdate = Set-IniContent -FilePath $IniFile -Sections "$BIOSSerialNumber" -NameValuePairs @{"OSFeatures"="NetFx3"};Out-IniFile -FilePath $IniFile -Force -Encoding ASCII -InputObject $CSIniUpdate
+    #$CSIniUpdate = Set-IniContent -FilePath $IniFile -Sections "$BIOSSerialNumber" -NameValuePairs @{"OSFeatures"="NetFx3"};Out-IniFile -FilePath $IniFile -Force -Encoding ASCII -InputObject $CSIniUpdate
     
 
     if($TestMode -eq $True){
@@ -485,14 +485,6 @@ Write-Log -Message "Update CustomSettings.ini"
 Foreach($Obj in $BIOSSerialNumbers.Values){
     $CSIniUpdate = Remove-IniEntry -FilePath $IniFile -Sections $Obj
     Out-IniFile -FilePath $IniFile -Force -Encoding ASCII -InputObject $CSIniUpdate
-}
-
-#Cleanup MDT Monitoring data
-Write-Log -Message "Cleanup MDT Monitoring data"
-if($EnableMDTMonitoring -eq $True){
-    foreach($RefTaskSequenceID in $RefTaskSequenceIDs){
-        Get-MDTMonitorData -Path MDT: | Where-Object -Property Name -EQ -Value $RefTaskSequenceID | Remove-MDTMonitorData -Path MDT:
-    }
 }
 
 if($TestMode -ne $True){

@@ -48,7 +48,7 @@ $XMLFile = "$RootPath\IMF.xml"
 $Global:writetoscreen = $true
 
 #Importing modules
-Import-Module PSINI -ErrorAction Stop -WarningAction Stop -Force
+Import-Module PSINI -ErrorAction Stop -WarningAction Stop -Force -MinimumVersion 2.0.5
 Write-Log -Message "Module IMFFunctions imported"
 Import-Module IMFFunctions -ErrorAction Stop -WarningAction Stop -Force
 Write-Log -Message "Module IMFFunctions imported"
@@ -98,7 +98,7 @@ if((Test-Path -Path $MDTImage) -eq $true){Write-Log -Message "Access to $MDTImag
 
 #Get TaskSequences
 Write-Log -Message "Get TaskSequences"
-$RefTaskSequenceIDs = (Get-ChildItem -Path "MDT:\Task Sequences\$($Settings.Settings.MDT.RefTaskSequenceFolderName)" | where Enable -EQ $true).ID
+$RefTaskSequenceIDs = (Get-ChildItem -Path "MDT:\Task Sequences\$($Settings.Settings.MDT.RefTaskSequenceFolderName)" | Where-Object Enable -EQ $true).ID
 if($RefTaskSequenceIDs.count -eq 0){
     Write-Log -Message "Sorry, could not find any TaskSequences to work with"
     Return "Fail"
@@ -108,7 +108,7 @@ Write-Log -Message "Found $($RefTaskSequenceIDs.count) TaskSequences to work on"
 
 #Get detailed info
 Write-Log -Message "Get detailed info about the task sequences"
-$Result = (Get-ChildItem -Path "MDT:\Task Sequences\$($Settings.Settings.MDT.RefTaskSequenceFolderName)" | where Enable -EQ $true)
+$Result = (Get-ChildItem -Path "MDT:\Task Sequences\$($Settings.Settings.MDT.RefTaskSequenceFolderName)" | Where-Object Enable -EQ $true)
 foreach($obj in ($Result | Select-Object ID,Name,Version)){
     $data = "$($obj.ID) $($obj.Name) $($obj.Version)"
     Write-Log -Message $data
@@ -350,11 +350,11 @@ Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername) -ScriptBl
     foreach($property in ($Data.content.properties) ){
         $Hash =  [ordered]@{ 
             Name = $($property.Name); 
-            PercentComplete = $($property.PercentComplete.’#text’); 
-            Warnings = $($property.Warnings.’#text’); 
-            Errors = $($property.Errors.’#text’); 
+            PercentComplete = $($property.PercentComplete.'#text'); 
+            Warnings = $($property.Warnings.'#text'); 
+            Errors = $($property.Errors.'#text'); 
             DeploymentStatus = $( 
-            Switch($property.DeploymentStatus.’#text’){ 
+            Switch($property.DeploymentStatus.'#text'){ 
                 1 { "Active/Running"} 
                 2 { "Failed"} 
                 3 { "Successfully completed"} 
@@ -370,8 +370,8 @@ Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername) -ScriptBl
             VMHost = $($property.VMHost.'#text');
             VMName = $($property.VMName.'#text');
             LastTime = $($property.LastTime.'#text') -replace "T"," ";
-            StartTime = $($property.StartTime.’#text’) -replace "T"," "; 
-            EndTime = $($property.EndTime.’#text’) -replace "T"," "; 
+            StartTime = $($property.StartTime.'#text') -replace "T"," "; 
+            EndTime = $($property.EndTime.'#text') -replace "T"," "; 
             }
         New-Object PSObject -Property $Hash
         }
@@ -396,7 +396,7 @@ Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername) -ScriptBl
                     Write-Output "Currently running VM's : $($RunningVMs.Name) at $(Get-Date)"
                 }
                 else{
-                    Get-MDTOData -MDTMonitorServer $MDTServer | Where-Object -Property Name -EQ -Value $RunningVM.Name | Select-Object Name,PercentComplete,Warnings,Errors,DeploymentStatus,StartTime,Lasttime | FT
+                    Get-MDTOData -MDTMonitorServer $MDTServer | Where-Object -Property Name -EQ -Value $RunningVM.Name | Select-Object Name,PercentComplete,Warnings,Errors,DeploymentStatus,StartTime,Lasttime | Format-Table
                 }
             }
             Start-Sleep -Seconds "30"
@@ -440,11 +440,11 @@ Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername) -ScriptBl
     foreach($property in ($Data.content.properties) ){
         $Hash =  [ordered]@{ 
             Name = $($property.Name); 
-            PercentComplete = $($property.PercentComplete.’#text’); 
-            Warnings = $($property.Warnings.’#text’); 
-            Errors = $($property.Errors.’#text’); 
+            PercentComplete = $($property.PercentComplete.'#text'); 
+            Warnings = $($property.Warnings.'#text'); 
+            Errors = $($property.Errors.'#text'); 
             DeploymentStatus = $( 
-            Switch($property.DeploymentStatus.’#text’){ 
+            Switch($property.DeploymentStatus.'#text'){ 
                 1 { "Active/Running"} 
                 2 { "Failed"} 
                 3 { "Successfully completed"} 
@@ -460,8 +460,8 @@ Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername) -ScriptBl
             VMHost = $($property.VMHost.'#text');
             VMName = $($property.VMName.'#text');
             LastTime = $($property.LastTime.'#text') -replace "T"," ";
-            StartTime = $($property.StartTime.’#text’) -replace "T"," "; 
-            EndTime = $($property.EndTime.’#text’) -replace "T"," "; 
+            StartTime = $($property.StartTime.'#text') -replace "T"," "; 
+            EndTime = $($property.EndTime.'#text') -replace "T"," "; 
             }
         New-Object PSObject -Property $Hash
         }
@@ -473,7 +473,7 @@ Invoke-Command -ComputerName $($Settings.Settings.HyperV.Computername) -ScriptBl
                     Write-Output "Currently running VM's : $($RunningVMs.Name) at $(Get-Date)"
                 }
                 else{
-                    Get-MDTOData -MDTMonitorServer $MDTServer | Where-Object -Property Name -EQ -Value $RunningVM.Name | Select-Object Name,PercentComplete,Warnings,Errors,DeploymentStatus,StartTime,Lasttime | FT
+                    Get-MDTOData -MDTMonitorServer $MDTServer | Where-Object -Property Name -EQ -Value $RunningVM.Name | Select-Object Name,PercentComplete,Warnings,Errors,DeploymentStatus,StartTime,Lasttime | Format-Table
                 }
             }
             Start-Sleep -Seconds "30"
